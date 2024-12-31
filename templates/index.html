@@ -13,6 +13,11 @@
             --container-bg: #ffffff;
             --input-bg: #f5f5f5;
             --border-color: #ddd;
+            --card-bg: #ffffff;
+            --danger-color: #dc3545;
+            --danger-hover: #c82333;
+            --secondary-color: #6c757d;
+            --secondary-hover: #5a6268;
         }
 
         [data-theme="dark"] {
@@ -23,30 +28,46 @@
             --container-bg: #2d2d2d;
             --input-bg: #3d3d3d;
             --border-color: #444;
+            --card-bg: #2d2d2d;
+            --danger-color: #dc3545;
+            --danger-hover: #bb2d3b;
+            --secondary-color: #6c757d;
+            --secondary-hover: #5a6268;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: all 0.3s ease;
+            min-height: 100vh;
         }
 
         .container {
-            background-color: var(--container-bg);
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .app-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
         }
 
         .theme-toggle {
@@ -57,6 +78,7 @@
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 14px;
         }
 
         .theme-toggle:hover {
@@ -64,131 +86,253 @@
             color: white;
         }
 
-        .search-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+        .search-section {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
         }
 
-        input[type="text"] {
-            padding: 8px;
+        @media (min-width: 768px) {
+            .search-inputs {
+                display: grid;
+                grid-template-columns: 1fr 1fr auto;
+                gap: 15px;
+            }
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            flex: 1;
+            border-radius: 8px;
             background-color: var(--input-bg);
             color: var(--text-color);
+            font-size: 16px;
+            transition: all 0.3s ease;
         }
 
-        button {
-            padding: 8px 16px;
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
             background-color: var(--primary-color);
             color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
         }
 
-        button:hover {
+        .btn-primary:hover {
             background-color: var(--hover-color);
         }
 
-        #songsList {
-            margin-bottom: 20px;
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
         }
 
-        .song-item {
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 5px;
-            border-radius: 4px;
-            cursor: pointer;
-            background-color: var(--container-bg);
-            transition: background-color 0.3s ease;
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
         }
 
-        .song-item:hover {
-            background-color: var(--input-bg);
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
         }
 
-        #lyricsContainer {
+        .btn-secondary:hover {
+            background-color: var(--secondary-hover);
+        }
+
+        .songs-container {
             margin-top: 20px;
         }
 
-        textarea {
+        .desktop-view {
+            display: none;
+        }
+
+        .mobile-view {
+            display: block;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-view {
+                display: block;
+            }
+            .mobile-view {
+                display: none;
+            }
+        }
+
+        .songs-table {
             width: 100%;
-            min-height: 300px;
-            margin-top: 10px;
-            padding: 10px;
+            border-collapse: collapse;
+        }
+
+        .songs-table th,
+        .songs-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .songs-table tr {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .songs-table tr:hover {
+            background-color: var(--input-bg);
+        }
+
+        .songs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .song-card {
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .song-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Lyrics View */
+        .lyrics-view {
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .lyrics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .lyrics-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .lyrics-textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             background-color: var(--input-bg);
             color: var(--text-color);
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: space-between;
         }
 
         .hidden {
             display: none;
         }
 
-        .edit-controls {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
-            justify-content: space-between;
-        }
+        @media (max-width: 767px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
 
-        .danger-button {
-            background-color: #dc3545;
-        }
+            .actions-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
 
-        .danger-button:hover {
-            background-color: #c82333;
-        }
-
-        .back-button {
-            background-color: #6c757d;
-        }
-
-        .back-button:hover {
-            background-color: #5a6268;
-        }
-
-        #mainContent, #lyricsView {
-            transition: all 0.3s ease;
+            .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Lyrics Manager</h1>
+            <h1 class="app-title">Lyrics Manager</h1>
             <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
         </div>
         
         <div id="mainContent">
-            <div class="search-container">
-                <input type="text" id="artistInput" placeholder="Artist name">
-                <input type="text" id="titleInput" placeholder="Song title">
-                <button onclick="searchLyrics()">Search</button>
+            <div class="search-section">
+                <div class="search-inputs">
+                    <input type="text" id="artistInput" class="input-field" placeholder="Artist name">
+                    <input type="text" id="titleInput" class="input-field" placeholder="Song title">
+                    <button class="btn btn-primary" onclick="searchLyrics()">Search</button>
+                </div>
+                <input type="text" id="filterInput" class="input-field" placeholder="Filter saved songs...">
             </div>
 
-            <div class="search-container">
-                <input type="text" id="filterInput" placeholder="Filter saved songs...">
-            </div>
+            <div class="songs-container">
+                <!-- Table view for desktop -->
+                <div class="desktop-view">
+                    <table class="songs-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Artist</th>
+                            </tr>
+                        </thead>
+                        <tbody id="songsTableBody"></tbody>
+                    </table>
+                </div>
 
-            <div id="songsList"></div>
+                <!-- List view for mobile -->
+                <div class="mobile-view">
+                    <div id="songsList" class="songs-list"></div>
+                </div>
+            </div>
         </div>
 
-        <div id="lyricsView" class="hidden">
-            <h2>Lyrics</h2>
-            <div id="currentFilename"></div>
-            <textarea id="lyricsText"></textarea>
-            <div class="edit-controls">
-                <button class="back-button" onclick="goBack()">Back</button>
-                <div>
-                    <button onclick="saveLyrics()">Save Changes</button>
-                    <button onclick="showRenamePrompt()">Rename File</button>
-                    <button class="danger-button" onclick="deleteFile()">Delete File</button>
+        <div id="lyricsView" class="lyrics-view hidden">
+            <div class="lyrics-header">
+                <h2 class="lyrics-title">Lyrics</h2>
+                <div id="currentFilename"></div>
+            </div>
+            <textarea id="lyricsText" class="lyrics-textarea"></textarea>
+            <div class="actions-bar">
+                <button class="btn btn-secondary" onclick="goBack()">Back</button>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="saveLyrics()">Save Changes</button>
+                    <button class="btn btn-secondary" onclick="showRenamePrompt()">Rename</button>
+                    <button class="btn btn-danger" onclick="deleteFile()">Delete</button>
                 </div>
             </div>
         </div>
@@ -197,7 +341,6 @@
     <script>
         let currentFilename = '';
         
-        // Theme management
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
@@ -209,7 +352,6 @@
             setTheme(newTheme);
         }
 
-        // Initialize theme
         const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
 
@@ -222,14 +364,32 @@
         }
 
         function displaySongsList(files) {
+            // Update mobile list view
             const songsList = document.getElementById('songsList');
             songsList.innerHTML = '';
+            
+            // Update desktop table view
+            const songsTableBody = document.getElementById('songsTableBody');
+            songsTableBody.innerHTML = '';
+
             files.forEach(filename => {
-                const div = document.createElement('div');
-                div.className = 'song-item';
-                div.textContent = filename.replace('.txt', '');
-                div.onclick = () => loadSongLyrics(filename);
-                songsList.appendChild(div);
+                const [title, artist] = filename.replace('.txt', '').split('-');
+                
+                // Create mobile card
+                const card = document.createElement('div');
+                card.className = 'song-card';
+                card.textContent = `${title} - ${artist}`;
+                card.onclick = () => loadSongLyrics(filename);
+                songsList.appendChild(card);
+
+                // Create table row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${title}</td>
+                    <td>${artist}</td>
+                `;
+                row.onclick = () => loadSongLyrics(filename);
+                songsTableBody.appendChild(row);
             });
         }
 
@@ -371,10 +531,19 @@
 
         document.getElementById('filterInput').addEventListener('input', function(e) {
             const filterText = e.target.value.toLowerCase();
-            const songItems = document.querySelectorAll('.song-item');
-            songItems.forEach(item => {
-                const songText = item.textContent.toLowerCase();
-                item.style.display = songText.includes(filterText) ? 'block' : 'none';
+            
+            // Filter mobile cards
+            const songCards = document.querySelectorAll('.song-card');
+            songCards.forEach(card => {
+                const songText = card.textContent.toLowerCase();
+                card.style.display = songText.includes(filterText) ? 'block' : 'none';
+            });
+
+            // Filter table rows
+            const tableRows = document.querySelectorAll('#songsTableBody tr');
+            tableRows.forEach(row => {
+                const songText = row.textContent.toLowerCase();
+                row.style.display = songText.includes(filterText) ? '' : 'none';
             });
         });
 
