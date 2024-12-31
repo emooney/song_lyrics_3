@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import os
 import requests
 import json
+import re
 
 app = Flask(__name__)
 SONGS_DIR = 'songs'
@@ -17,6 +18,13 @@ def sanitize_filename(filename):
         filename = filename.replace(char, '')
     return filename
 
+def parse_song_input(input_text):
+    # Try to split by " by " (case insensitive)
+    parts = re.split(r'\s+by\s+', input_text, flags=re.IGNORECASE, maxsplit=1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    return None, None
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -24,8 +32,11 @@ def index():
 @app.route('/get_lyrics', methods=['POST'])
 def get_lyrics():
     data = request.json
-    artist = data.get('artist')
-    title = data.get('title')
+    search_text = data.get('search_text', '')
+    
+    title, artist = parse_song_input(search_text)
+    if not title or not artist:
+        return jsonify({'error': 'Please enter song in format: "Song Title by Artist"'}), 400
     
     # First check if we have the lyrics locally
     filename = f"{sanitize_filename(title)}-{sanitize_filename(artist)}.txt"
@@ -37,16 +48,23 @@ def get_lyrics():
     else:
         # If not found locally, fetch from API
         try:
-            response = requests.get(f'https://api.lyrics.ovh/v1/{artist}/{title}')
-            if response.status_code == 200:
-                lyrics = response.json()['lyrics']
-                # Save to file
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(lyrics)
-            else:
-                return jsonify({'error': 'Lyrics not found'}), 404
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            response = requests.get(f'https://api.lyrics.ovh/v1/{artist}/{title}', timeout=10)
+            if response.status_code == 404:
+                return jsonify({'error': 'Lyrics not found for this song'}), 404
+            elif response.status_code != 200:
+                return jsonify({'error': 'Failed to fetch lyrics from server'}), response.status_code
+            
+            lyrics = response.json().get('lyrics')
+            if not lyrics:
+                return jsonify({'error': 'No lyrics found for this song'}), 404
+                
+            # Save to file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(lyrics)
+        except requests.exceptions.Timeout:
+            return jsonify({'error': 'Request timed out. Please try again.'}), 504
+        except requests.exceptions.RequestException as e:
+            return jsonify({'error': f'Error fetching lyrics: {str(e)}'}), 500
     
     return jsonify({
         'lyrics': lyrics,
@@ -99,6 +117,22 @@ def delete_file():
     try:
         os.remove(file_path)
         return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_saved_lyrics', methods=['POST'])
+def get_saved_lyrics():
+    data = request.json
+    filename = data.get('filename')
+    
+    file_path = os.path.join(SONGS_DIR, filename)
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lyrics = f.read()
+        return jsonify({
+            'lyrics': lyrics,
+            'filename': filename
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

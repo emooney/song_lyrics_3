@@ -18,6 +18,7 @@
             --danger-hover: #c82333;
             --secondary-color: #6c757d;
             --secondary-hover: #5a6268;
+            --hover-bg: #f0f0f0;
         }
 
         [data-theme="dark"] {
@@ -188,13 +189,13 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        .songs-table tr {
+        .songs-table tbody tr {
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.2s;
         }
 
-        .songs-table tr:hover {
-            background-color: var(--input-bg);
+        .songs-table tbody tr:hover {
+            background-color: var(--hover-bg);
         }
 
         .songs-list {
@@ -209,12 +210,12 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .song-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         /* Lyrics View */
@@ -293,11 +294,12 @@
         <div id="mainContent">
             <div class="search-section">
                 <div class="search-inputs">
-                    <input type="text" id="artistInput" class="input-field" placeholder="Artist name">
-                    <input type="text" id="titleInput" class="input-field" placeholder="Song title">
-                    <button class="btn btn-primary" onclick="searchLyrics()">Search</button>
+                    <input type="text" 
+                           id="searchInput" 
+                           class="input-field" 
+                           placeholder="Search saved lyrics or enter 'Song Title by Artist' to find new lyrics"
+                           onkeyup="handleSearch(event)">
                 </div>
-                <input type="text" id="filterInput" class="input-field" placeholder="Filter saved songs...">
             </div>
 
             <div class="songs-container">
@@ -359,57 +361,117 @@
             fetch('/list_songs')
                 .then(response => response.json())
                 .then(files => {
-                    displaySongsList(files);
+                    updateSongsList(files);
                 });
         }
 
-        function displaySongsList(files) {
-            // Update mobile list view
+        function updateSongsList(files) {
+            const tableBody = document.getElementById('songsTableBody');
             const songsList = document.getElementById('songsList');
+            
+            // Clear existing content
+            tableBody.innerHTML = '';
             songsList.innerHTML = '';
             
-            // Update desktop table view
-            const songsTableBody = document.getElementById('songsTableBody');
-            songsTableBody.innerHTML = '';
-
             files.forEach(filename => {
-                const [title, artist] = filename.replace('.txt', '').split('-');
-                
-                // Create mobile card
-                const card = document.createElement('div');
-                card.className = 'song-card';
-                card.textContent = `${title} - ${artist}`;
-                card.onclick = () => loadSongLyrics(filename);
-                songsList.appendChild(card);
-
-                // Create table row
+                // Create table row (desktop view)
                 const row = document.createElement('tr');
+                const parts = filename.replace('.txt', '').split('-');
+                const title = parts[0];
+                const artist = parts[1];
+                
                 row.innerHTML = `
                     <td>${title}</td>
                     <td>${artist}</td>
                 `;
-                row.onclick = () => loadSongLyrics(filename);
-                songsTableBody.appendChild(row);
+                row.onclick = () => loadSavedLyrics(filename);
+                tableBody.appendChild(row);
+                
+                // Create card (mobile view)
+                const card = document.createElement('div');
+                card.className = 'song-card';
+                card.innerHTML = `
+                    <div class="song-info">
+                        <div class="song-title">${title}</div>
+                        <div class="song-artist">${artist}</div>
+                    </div>
+                `;
+                card.onclick = () => loadSavedLyrics(filename);
+                songsList.appendChild(card);
             });
         }
 
-        function searchLyrics() {
-            const artist = document.getElementById('artistInput').value.trim();
-            const title = document.getElementById('titleInput').value.trim();
-            
-            if (!artist || !title) {
-                alert('Please enter both artist and title');
-                return;
-            }
+        function loadSavedLyrics(filename) {
+            fetch('/get_saved_lyrics', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                displayLyrics(data.lyrics, data.filename);
+            })
+            .catch(error => {
+                alert('Error loading lyrics: ' + error);
+            });
+        }
 
+        function handleSearch(event) {
+            const searchText = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!searchText) return;
+            
+            // Filter existing songs
+            const tableRows = document.querySelectorAll('#songsTableBody tr');
+            const songCards = document.querySelectorAll('.song-card');
+            let hasMatches = false;
+
+            // Filter table rows (desktop)
+            tableRows.forEach(row => {
+                const songText = row.textContent.toLowerCase();
+                const isVisible = songText.includes(searchText);
+                row.style.display = isVisible ? '' : 'none';
+                if (isVisible) hasMatches = true;
+            });
+
+            // Filter cards (mobile)
+            songCards.forEach(card => {
+                const songText = card.textContent.toLowerCase();
+                const isVisible = songText.includes(searchText);
+                card.style.display = isVisible ? 'block' : 'none';
+                if (isVisible) hasMatches = true;
+            });
+
+            // If Enter is pressed and no matches found, try to fetch from API
+            if (event.key === 'Enter' && !hasMatches) {
+                // Check if input contains 'by' or if we can parse it as artist/title
+                if (searchText.includes(' by ')) {
+                    searchLyrics(searchText);
+                } else {
+                    alert('Please enter song in format: "Song Title by Artist"');
+                }
+            }
+        }
+
+        function searchLyrics(searchText) {
             fetch('/get_lyrics', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ artist, title })
+                body: JSON.stringify({ search_text: searchText })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch lyrics');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.error) {
                     alert(data.error);
@@ -417,30 +479,11 @@
                 }
                 displayLyrics(data.lyrics, data.filename);
                 loadSavedSongs();
+                // Clear the search input after successful search
+                document.getElementById('searchInput').value = '';
             })
             .catch(error => {
                 alert('Error fetching lyrics: ' + error);
-            });
-        }
-
-        function loadSongLyrics(filename) {
-            fetch('/get_lyrics', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    artist: filename.split('-')[1].replace('.txt', ''),
-                    title: filename.split('-')[0]
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-                displayLyrics(data.lyrics, data.filename);
             });
         }
 
@@ -528,24 +571,6 @@
                 });
             }
         }
-
-        document.getElementById('filterInput').addEventListener('input', function(e) {
-            const filterText = e.target.value.toLowerCase();
-            
-            // Filter mobile cards
-            const songCards = document.querySelectorAll('.song-card');
-            songCards.forEach(card => {
-                const songText = card.textContent.toLowerCase();
-                card.style.display = songText.includes(filterText) ? 'block' : 'none';
-            });
-
-            // Filter table rows
-            const tableRows = document.querySelectorAll('#songsTableBody tr');
-            tableRows.forEach(row => {
-                const songText = row.textContent.toLowerCase();
-                row.style.display = songText.includes(filterText) ? '' : 'none';
-            });
-        });
 
         // Load saved songs when page loads
         loadSavedSongs();
