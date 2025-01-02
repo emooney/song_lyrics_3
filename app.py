@@ -16,7 +16,8 @@ def sanitize_filename(filename):
     invalid_chars = '<>:"/\\|?*'
     for char in invalid_chars:
         filename = filename.replace(char, '')
-    return filename
+    # Capitalize the first letter of each word
+    return ' '.join(word.capitalize() for word in filename.split())
 
 def parse_song_input(input_text):
     # Try to split by " by " (case insensitive)
